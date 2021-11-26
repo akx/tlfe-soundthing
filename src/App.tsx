@@ -1,5 +1,5 @@
 import React from "react";
-import notes from "./notes";
+import { midiToFreq, midiToNoteName } from "./notes";
 import { useInterval } from "react-use";
 
 interface Asdf {
@@ -89,6 +89,16 @@ function Viz({ vizNode }: { vizNode: AnalyserNode }) {
   );
 }
 
+const ROOT = 432;
+
+function mapRange<T>(min: number, max: number, fn: (num: number) => T) {
+  const out = [];
+  for (let i = min; i < max; i++) {
+    out.push(fn(i));
+  }
+  return out;
+}
+
 function App() {
   const [audioContext] = React.useState(() => init());
   const [song, setSong] = React.useState("44 66 89 30");
@@ -108,7 +118,7 @@ function App() {
   const currentNoteFrequency = React.useMemo(() => {
     const actualNoteIndex = noteIndex % songNotes.length;
     const note = songNotes[actualNoteIndex];
-    return notes[note] || 432;
+    return midiToFreq(note, ROOT) || ROOT;
   }, [noteIndex, songNotes]);
   React.useEffect(() => {
     audioContext.oscNode.frequency.value = currentNoteFrequency;
@@ -160,9 +170,9 @@ function App() {
       <hr />
 
       <div style={{ display: "flex", flexWrap: "wrap" }}>
-        {Object.keys(notes).map((note) => (
-          <button key={note} onClick={() => appendNote(note)}>
-            {note}
+        {mapRange(20, 150, (note) => (
+          <button key={note} onClick={() => appendNote(String(note))}>
+            {midiToNoteName(note)}
           </button>
         ))}
       </div>
