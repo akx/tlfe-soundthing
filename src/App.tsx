@@ -5,6 +5,7 @@ import { Viz } from "./components/Viz";
 import Slider from "./components/Slider";
 import NoteGrid from "./components/NoteGrid";
 import styled from "styled-components";
+import Toggle from "./components/Toggle";
 
 const Main = styled.div({
   display: "flex",
@@ -33,12 +34,7 @@ function init(): AudioBits {
   const audioContext = new AudioContext();
 
   const oscNode = audioContext.createOscillator();
-  oscNode.type = "square";
-  //
   const filterNode = audioContext.createBiquadFilter();
-  filterNode.frequency.value = 800;
-  filterNode.type = "lowpass";
-
   const vizNode = audioContext.createAnalyser();
   vizNode.fftSize = 512;
   vizNode.smoothingTimeConstant = 0.3;
@@ -49,17 +45,40 @@ function init(): AudioBits {
   return { audioContext, oscNode, filterNode, vizNode };
 }
 
+const oscTypeOptions: [OscillatorType, string][] = [
+  ["sawtooth", "Saw"],
+  ["sine", "Sin"],
+  ["square", "Sqr"],
+  ["triangle", "Tri"],
+];
+
+const filterTypeOptions: [BiquadFilterType, string][] = [
+  ["bandpass", "Bandpass"],
+  ["highpass", "Highpass"],
+  ["lowpass", "Lowpass"],
+  ["notch", "Notch"],
+  ["peaking", "Peaking"],
+];
+
 const ROOT = 432;
 
 function App() {
-  const [audioContext] = React.useState(() => init());
+  const [au] = React.useState(() => init());
   const [song, setSong] = React.useState("44 66 89 30");
   const [tempo, setTempo] = React.useState(120);
   const [filterFreq, setFilterFreq] = React.useState(800);
+  const [filterQ, setFilterQ] = React.useState(1);
+  const [filterType, setFilterType] =
+    React.useState<BiquadFilterType>("lowpass");
+  const [oscType, setOscType] = React.useState<OscillatorType>("square");
   const [noteIndex, setNoteIndex] = React.useState(0);
-  useInterval(() => {
+  const lastAuRef = React.useRef<AudioBits>(au);
+  lastAuRef.current = au;
+
+  const tick = React.useCallback(() => {
     setNoteIndex((ni) => ni + 1);
-  }, 60000 / (tempo * 4));
+  }, []);
+  useInterval(tick, 60000 / (tempo * 4));
 
   const songNotes = React.useMemo(() => {
     return song
@@ -73,14 +92,13 @@ function App() {
     return midiToFreq(note, ROOT) || ROOT;
   }, [noteIndex, songNotes]);
   React.useEffect(() => {
-    audioContext.oscNode.frequency.value = currentNoteFrequency;
-    audioContext.filterNode.frequency.value = filterFreq;
-  }, [
-    audioContext.filterNode.frequency,
-    audioContext.oscNode.frequency,
-    currentNoteFrequency,
-    filterFreq,
-  ]);
+    const au = lastAuRef.current;
+    au.oscNode.frequency.value = currentNoteFrequency;
+    au.oscNode.type = oscType;
+    au.filterNode.frequency.value = filterFreq;
+    au.filterNode.Q.value = filterQ;
+    au.filterNode.type = filterType;
+  }, [currentNoteFrequency, filterFreq, filterQ, filterType, oscType]);
   const appendNote = React.useCallback((note: string) => {
     setSong((currentSong) => (currentSong + " " + note).trim());
   }, []);
@@ -89,8 +107,8 @@ function App() {
       <Toolbar>
         <button
           onClick={() => {
-            audioContext.audioContext.resume();
-            audioContext.oscNode.start();
+            au.audioContext.resume();
+            au.oscNode.start();
           }}
         >
           Go
@@ -114,6 +132,26 @@ function App() {
             min={400}
             max={22000}
           />
+          <Slider
+            label="Filter Q"
+            value={filterQ}
+            onChange={setFilterQ}
+            min={0}
+            max={50}
+            step={0.01}
+          />
+          <Toggle
+            label="Filter Type"
+            value={filterType}
+            options={filterTypeOptions}
+            onChange={setFilterType}
+          />
+          <Toggle
+            label="Oscillator Type"
+            value={oscType}
+            options={oscTypeOptions}
+            onChange={setOscType}
+          />
         </div>
 
         <div>
@@ -126,7 +164,7 @@ function App() {
         </div>
 
         <div>
-          <Viz vizNode={audioContext.vizNode} />
+          <Viz vizNode={au.vizNode} />
         </div>
       </Main>
     </div>

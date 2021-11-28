@@ -1,29 +1,12 @@
 import React from "react";
-import styled from "styled-components";
+import {
+  ControlBody,
+  ControlInput,
+  ControlLabelText,
+  ControlValueText,
+  InputProps,
+} from "./ControlParts";
 
-const SliderBody = styled.label`
-  display: flex;
-  justify-content: space-between;
-  padding: 0.5em;
-`;
-
-const SliderLabelText = styled.span`
-  padding-right: 1em;
-  white-space: nowrap;
-`;
-const SliderValueText = styled.span`
-  padding-left: 1em;
-  white-space: nowrap;
-  width: 5em;
-  text-align: right;
-`;
-const SliderInput = styled.input`
-  flex: 1;
-`;
-type InputProps = React.DetailedHTMLProps<
-  React.InputHTMLAttributes<HTMLInputElement>,
-  HTMLInputElement
->;
 type SliderProps = Omit<InputProps, "onChange" | "ref"> & {
   label: string;
   unit?: string;
@@ -36,19 +19,19 @@ function Slider({ label, unit, onChange, value, ...rest }: SliderProps) {
     [onChange],
   );
   return (
-    <SliderBody>
-      <SliderLabelText>{label}</SliderLabelText>
-      <SliderInput
+    <ControlBody>
+      <ControlLabelText>{label}</ControlLabelText>
+      <ControlInput
         {...rest}
         type="range"
         onChange={onInputChange}
         value={value}
       />
-      <SliderValueText>
+      <ControlValueText>
         {value}
         {unit ? ` ${unit}` : null}
-      </SliderValueText>
-    </SliderBody>
+      </ControlValueText>
+    </ControlBody>
   );
 }
 
