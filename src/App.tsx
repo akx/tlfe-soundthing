@@ -3,6 +3,7 @@ import { midiToFreq, midiToNoteName } from "./notes";
 import { useInterval } from "react-use";
 import { mapRange } from "./utils";
 import { Viz } from "./components/Viz";
+import Slider from "./components/Slider";
 
 interface AudioBits {
   audioContext: AudioContext;
@@ -83,22 +84,21 @@ function App() {
         value={song}
         onChange={(e) => setSong(e.target.value)}
       />
-      <input
-        type="range"
+      <Slider
+        label="Tempo"
+        value={tempo}
+        unit="BPM"
+        onChange={setTempo}
         min={20}
         max={300}
-        value={tempo}
-        onChange={(e) => setTempo(e.target.valueAsNumber)}
       />
-      {tempo}
-      <hr />
-
-      <input
-        type="range"
+      <Slider
+        label="Filter Frequency"
+        value={filterFreq}
+        unit="Hz"
+        onChange={setFilterFreq}
         min={400}
         max={22000}
-        value={filterFreq}
-        onChange={(e) => setFilterFreq(e.target.valueAsNumber)}
       />
 
       <hr />
