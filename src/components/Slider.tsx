@@ -4,7 +4,6 @@ import styled from "styled-components";
 const SliderBody = styled.label`
   display: flex;
   justify-content: space-between;
-  width: 30em;
   padding: 0.5em;
 `;
 

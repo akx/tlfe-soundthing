@@ -57,7 +57,7 @@ export function Viz({ vizNode }: { vizNode: AnalyserNode }) {
     <canvas
       width={800}
       height={300}
-      style={{ width: "40%", border: "1px solid orange" }}
+      style={{ width: "100%", border: "1px solid orange" }}
       ref={canvasRef}
     />
   );

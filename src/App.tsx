@@ -1,10 +1,26 @@
-import React, { useEffect } from "react";
-import { midiToFreq, midiToNoteName } from "./notes";
+import React from "react";
+import { midiToFreq } from "./notes";
 import { useInterval } from "react-use";
-import { mapRange } from "./utils";
 import { Viz } from "./components/Viz";
 import Slider from "./components/Slider";
 import NoteGrid from "./components/NoteGrid";
+import styled from "styled-components";
+
+const Main = styled.div({
+  display: "flex",
+  ">div": {
+    flex: 1,
+  },
+  gap: "1em",
+  padding: "1em",
+});
+const Toolbar = styled.div({
+  background: "#BDC581",
+  padding: "1em",
+});
+const SongInput = styled.input({
+  width: "100%",
+});
 
 interface AudioBits {
   audioContext: AudioContext;
@@ -70,43 +86,49 @@ function App() {
   }, []);
   return (
     <div className="App">
-      <button
-        onClick={() => {
-          audioContext.audioContext.resume();
-          audioContext.oscNode.start();
-        }}
-      >
-        Go
-      </button>
-      <hr />
-      <input
-        type="text"
-        value={song}
-        onChange={(e) => setSong(e.target.value)}
-      />
-      <Slider
-        label="Tempo"
-        value={tempo}
-        unit="BPM"
-        onChange={setTempo}
-        min={20}
-        max={300}
-      />
-      <Slider
-        label="Filter Frequency"
-        value={filterFreq}
-        unit="Hz"
-        onChange={setFilterFreq}
-        min={400}
-        max={22000}
-      />
+      <Toolbar>
+        <button
+          onClick={() => {
+            audioContext.audioContext.resume();
+            audioContext.oscNode.start();
+          }}
+        >
+          Go
+        </button>
+      </Toolbar>
+      <Main>
+        <div>
+          <Slider
+            label="Tempo"
+            value={tempo}
+            unit="BPM"
+            onChange={setTempo}
+            min={20}
+            max={300}
+          />
+          <Slider
+            label="Filter Frequency"
+            value={filterFreq}
+            unit="Hz"
+            onChange={setFilterFreq}
+            min={400}
+            max={22000}
+          />
+        </div>
 
-      <hr />
+        <div>
+          <SongInput
+            type="text"
+            value={song}
+            onChange={(e) => setSong(e.target.value)}
+          />
+          <NoteGrid onClickNote={appendNote} />
+        </div>
 
-      <NoteGrid onClickNote={appendNote} />
-
-      <hr />
-      <Viz vizNode={audioContext.vizNode} />
+        <div>
+          <Viz vizNode={audioContext.vizNode} />
+        </div>
+      </Main>
     </div>
   );
 }
