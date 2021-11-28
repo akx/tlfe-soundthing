@@ -89,7 +89,8 @@ function App() {
   const currentNoteFrequency = React.useMemo(() => {
     const actualNoteIndex = noteIndex % songNotes.length;
     const note = songNotes[actualNoteIndex];
-    return midiToFreq(note, ROOT) || ROOT;
+    const freq = midiToFreq(note, ROOT) || ROOT;
+    return Math.min(22050, Math.max(0, freq));
   }, [noteIndex, songNotes]);
   React.useEffect(() => {
     const au = lastAuRef.current;
