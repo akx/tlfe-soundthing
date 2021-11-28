@@ -4,6 +4,7 @@ import { useInterval } from "react-use";
 import { mapRange } from "./utils";
 import { Viz } from "./components/Viz";
 import Slider from "./components/Slider";
+import NoteGrid from "./components/NoteGrid";
 
 interface AudioBits {
   audioContext: AudioContext;
@@ -73,7 +74,6 @@ function App() {
         onClick={() => {
           audioContext.audioContext.resume();
           audioContext.oscNode.start();
-          console.log(audioContext.audioContext.state);
         }}
       >
         Go
@@ -103,13 +103,7 @@ function App() {
 
       <hr />
 
-      <div style={{ display: "flex", flexWrap: "wrap" }}>
-        {mapRange(20, 150, (note) => (
-          <button key={note} onClick={() => appendNote(String(note))}>
-            {midiToNoteName(note)}
-          </button>
-        ))}
-      </div>
+      <NoteGrid onClickNote={appendNote} />
 
       <hr />
       <Viz vizNode={audioContext.vizNode} />
