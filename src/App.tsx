@@ -1,11 +1,17 @@
 import React from "react";
-import { midiToFreq } from "./notes";
 import { useInterval } from "react-use";
 import { Viz } from "./components/Viz";
 import Slider from "./components/Slider";
 import NoteGrid from "./components/NoteGrid";
 import styled from "styled-components";
 import Toggle from "./components/Toggle";
+import {
+  AudioBits,
+  createAudioBits,
+  filterTypeOptions,
+  oscTypeOptions,
+  useAuSequence,
+} from "./audioBits";
 
 const Main = styled.div({
   display: "flex",
@@ -23,47 +29,8 @@ const SongInput = styled.input({
   width: "100%",
 });
 
-interface AudioBits {
-  audioContext: AudioContext;
-  filterNode: BiquadFilterNode;
-  oscNode: OscillatorNode;
-  vizNode: AnalyserNode;
-}
-
-function init(): AudioBits {
-  const audioContext = new AudioContext();
-
-  const oscNode = audioContext.createOscillator();
-  const filterNode = audioContext.createBiquadFilter();
-  const vizNode = audioContext.createAnalyser();
-  vizNode.fftSize = 512;
-  vizNode.smoothingTimeConstant = 0.3;
-
-  oscNode.connect(filterNode);
-  filterNode.connect(audioContext.destination);
-  filterNode.connect(vizNode);
-  return { audioContext, oscNode, filterNode, vizNode };
-}
-
-const oscTypeOptions: [OscillatorType, string][] = [
-  ["sawtooth", "Saw"],
-  ["sine", "Sin"],
-  ["square", "Sqr"],
-  ["triangle", "Tri"],
-];
-
-const filterTypeOptions: [BiquadFilterType, string][] = [
-  ["bandpass", "Bandpass"],
-  ["highpass", "Highpass"],
-  ["lowpass", "Lowpass"],
-  ["notch", "Notch"],
-  ["peaking", "Peaking"],
-];
-
-const ROOT = 432;
-
 function App() {
-  const [au] = React.useState(() => init());
+  const [au] = React.useState(() => createAudioBits());
   const [song, setSong] = React.useState("44 66 89 30");
   const [tempo, setTempo] = React.useState(120);
   const [filterFreq, setFilterFreq] = React.useState(800);
@@ -72,34 +39,20 @@ function App() {
     React.useState<BiquadFilterType>("lowpass");
   const [oscType, setOscType] = React.useState<OscillatorType>("square");
   const [noteIndex, setNoteIndex] = React.useState(0);
-  const lastAuRef = React.useRef<AudioBits>(au);
-  lastAuRef.current = au;
-
+  const auRef = React.useRef<AudioBits>(au);
+  auRef.current = au;
   const tick = React.useCallback(() => {
     setNoteIndex((ni) => ni + 1);
   }, []);
   useInterval(tick, 60000 / (tempo * 4));
-
-  const songNotes = React.useMemo(() => {
-    return song
-      .split(/\s+/)
-      .map((i) => +i)
-      .filter(Boolean);
-  }, [song]);
-  const currentNoteFrequency = React.useMemo(() => {
-    const actualNoteIndex = noteIndex % songNotes.length;
-    const note = songNotes[actualNoteIndex];
-    const freq = midiToFreq(note, ROOT) || ROOT;
-    return Math.min(22050, Math.max(0, freq));
-  }, [noteIndex, songNotes]);
+  useAuSequence(auRef, song, noteIndex);
   React.useEffect(() => {
-    const au = lastAuRef.current;
-    au.oscNode.frequency.value = currentNoteFrequency;
+    const au = auRef.current;
     au.oscNode.type = oscType;
     au.filterNode.frequency.value = filterFreq;
     au.filterNode.Q.value = filterQ;
     au.filterNode.type = filterType;
-  }, [currentNoteFrequency, filterFreq, filterQ, filterType, oscType]);
+  }, [filterFreq, filterQ, filterType, oscType]);
   const appendNote = React.useCallback((note: string) => {
     setSong((currentSong) => (currentSong + " " + note).trim());
   }, []);
